@@ -40,3 +40,20 @@ curl -X POST http://localhost:3000/api/translate \
 - Grok 4.1 Fast model ile çeviri
 - Maksimum 5MB dosya boyutu
 - Zaman kodları ve format korunur
+
+## Vercel'e Deploy
+
+1. Vercel hesabınıza giriş yapın
+2. Projeyi GitHub'a yükleyin
+3. Vercel'de "New Project" ile projeyi import edin
+4. Environment Variables ekleyin:
+   - `OPENROUTER_API_KEY`
+   - `API_KEY`
+5. Deploy edin
+
+Alternatif olarak Vercel CLI ile:
+
+```bash
+npm i -g vercel
+vercel
+```

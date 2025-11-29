@@ -17,7 +17,7 @@ app.use(errorHandler);
 
 export function start() {
   if (!config.openRouterApiKey) {
-    console.error('OPENROUTER_API_KEY tanımlanmamış!');
+    console.error('OPENROUTER_API_KEY tanımlanmamış');
     process.exit(1);
   }
 
