@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Altyazı Çevirici</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #0f0f0f;
+            --surface: #1a1a1a;
+            --surface-hover: #252525;
+            --accent: #60cdff;
+            --accent-hover: #7dd4ff;
+            --text: #ffffff;
+            --text-secondary: #9a9a9a;
+            --success: #6ccb5f;
+            --error: #ff6b6b;
+            --border: #333;
+        }
+        
+        body {
+            font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(96, 205, 255, 0.03) 0%, transparent 50%);
+            animation: rotate 20s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 32px;
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+        
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: transparent;
+        }
+        
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(96, 205, 255, 0.05);
+        }
+        
+        .drop-zone.has-file {
+            border-color: var(--success);
+            background: rgba(108, 203, 95, 0.05);
+        }
+        
+        .drop-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.6;
+        }
+        
+        .drop-text {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .drop-text span {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+        
+        .file-name {
+            color: var(--success);
+            font-weight: 500;
+            margin-top: 8px;
+            word-break: break-all;
+        }
+        
+        .file-input { display: none; }
+        
+        .api-key-section {
+            margin-top: 20px;
+        }
+        
+        .input-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: block;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            margin-top: 24px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn:hover:not(:disabled) {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn.loading .btn-text { display: none; }
+        .btn:not(.loading) .spinner { display: none; }
+        
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .toast {
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .toast.success {
+            background: var(--success);
+            color: #000;
+        }
+        
+        .toast.error {
+            background: var(--error);
+            color: #000;
+        }
+        
+        .toast.hide {
+            animation: slideOut 0.3s ease forwards;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes slideOut {
+            to { opacity: 0; transform: translateX(100px); }
+        }
+        
+        .progress-bar {
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 20px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress-bar.active { display: block; }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            animation: progress 30s ease-out forwards;
+        }
+        
+        @keyframes progress {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            90% { width: 90%; }
+            100% { width: 95%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Altyazı Çevirici</h1>
+            <p class="subtitle">SRT ve VTT dosyalarını Türkçeye çevirin</p>
+            
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-icon"></div>
+                <p class="drop-text">Dosyayı sürükleyin veya <span>seçin</span></p>
+                <p class="file-name" id="fileName"></p>
+            </div>
+            <input type="file" class="file-input" id="fileInput" accept=".srt,.vtt">
+            
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill"></div>
+            </div>
+            
+            <button class="btn" id="translateBtn" disabled>
+                <span class="btn-text">Çevir</span>
+                <div class="spinner"></div>
+            </button>
+        </div>
+    </div>
+    
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        const API_URL = 'https://translation-api-ochre.vercel.app/api/translate';
+        const API_KEY = 'kendimdenefretediyorum'; 
+        
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const translateBtn = document.getElementById('translateBtn');
+        const progressBar = document.getElementById('progressBar');
+        const toastContainer = document.getElementById('toastContainer');
+        
+        let selectedFile = null;
+        
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleFile(e.target.files[0]);
+        });
+        
+        function handleFile(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!['srt', 'vtt'].includes(ext)) {
+                showToast('Sadece SRT ve VTT dosyaları desteklenir', 'error');
+                return;
+            }
+            selectedFile = file;
+            fileName.textContent = file.name;
+            dropZone.classList.add('has-file');
+            updateButton();
+        }
+        
+        function updateButton() {
+            translateBtn.disabled = !selectedFile;
+        }
+        
+        translateBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            
+            translateBtn.classList.add('loading');
+            translateBtn.disabled = true;
+            progressBar.classList.add('active');
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'x-api-key': API_KEY },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.message || 'Çeviri başarısız');
+                }
+                
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = selectedFile.name;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showToast('Çeviri tamamlandı!', 'success');
+                resetForm();
+                
+            } catch (error) {
+                showToast(error.message || 'Bir hata oluştu', 'error');
+            } finally {
+                translateBtn.classList.remove('loading');
+                progressBar.classList.remove('active');
+                updateButton();
+            }
+        });
+        
+        function resetForm() {
+            selectedFile = null;
+            fileName.textContent = '';
+            dropZone.classList.remove('has-file');
+            fileInput.value = '';
+        }
+        
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `${type === 'success' ? '✓' : '✕'} ${message}`;
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
