@@ -1,4 +1,4 @@
-# Translation API
+# AI Çeviri API
 
 SRT ve VTT altyazı dosyalarını Türkçeye çeviren API.
 
